@@ -43,7 +43,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Gemini API Key
-API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyBdtXQxu979vhRtsE5GgGQYCUJLjVBYLEk')
+API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Initialize shared resources at startup
 @asynccontextmanager
