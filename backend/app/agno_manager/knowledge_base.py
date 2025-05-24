@@ -11,9 +11,7 @@ from agno.reranker.cohere import CohereReranker
 
 content_data = text_documents.content_data
 
-import os
-
-API_KEY = os.getenv('GEMINI_API_KEY')
+API_KEY = 'AIzaSyBdtXQxu979vhRtsE5GgGQYCUJLjVBYLEk'
 
 
 

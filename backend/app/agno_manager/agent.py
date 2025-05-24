@@ -1,9 +1,8 @@
 from agno_manager.agent import Agent
 from agno.models.google import Gemini
 from knowledge_base import knowledge_base
-import os
 
-API_KEY = os.getenv('GEMINI_API_KEY')
+API_KEY = 'AIzaSyBdtXQxu979vhRtsE5GgGQYCUJLjVBYLEk'
 
 agent = Agent(
     model=Gemini(id="gemini-2.0-flash", api_key=API_KEY),

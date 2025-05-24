@@ -1,39 +1,6 @@
 content_data = '''# Illinois Institute of Technology Graduate Admissions Knowledge Base
 
-## Knowledge Base - Managed via Web UI
-
-### Application Status
-We have received all of your documents. Your application is under [Pending Initial review/Pending Document Verification].
-
-### Deposit Refund Policy
-The deposit is a non-refundable payment unless you were denied your visa. If you were denied your visa you may share the 221G slip and request a refund. For further details, please contact Mr. Neal E Jeffery - njeffery@iit.edu / 312-567-5053.
-
-### TOEFL/IELTS Requirement
-All international students are required to submit TOEFL/IELTS test scores. If you have a 2-year degree from the United States or if you are from a TOEFL/IELTS waiver-eligible country, then we may waive this requirement. For more information: https://www.iit.edu/admissions-aid/graduate-admission/international-students/application-requirements-and-checklist
-
-### degree verification
-Ok
-
-### degree verification
-contact deg@iit.edu
-
-## Original Knowledge Base Content
-
-## Knowledge Base - Managed via Web UI
-
-### Application Status
-We have received all of your documents. Your application is under [Pending Initial review/Pending Document Verification].
-
-### Deposit Refund Policy
-The deposit is a non-refundable payment unless you were denied your visa. If you were denied your visa you may share the 221G slip and request a refund. For further details, please contact Mr. Neal E Jeffery - njeffery@iit.edu / 312-567-5053.
-
-### TOEFL/IELTS Requirement
-All international students are required to submit TOEFL/IELTS test scores. If you have a 2-year degree from the United States or if you are from a TOEFL/IELTS waiver-eligible country, then we may waive this requirement. For more information: https://www.iit.edu/admissions-aid/graduate-admission/international-students/application-requirements-and-checklist
-
-### degree verification
-Ok
-
-## Original Knowledge Base Content
+# Illinois Institute of Technology Graduate Admissions Knowledge Base
 
 ## Application Information
 ### Application Status

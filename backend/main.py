@@ -191,16 +191,6 @@ async def get_browser_from_pool():
             chrome_instance_path=chrome_path,
             headless=True,  # Headless mode for speed
             disable_security=True,  # Disable security for speed (use with caution)
-            extra_browser_args=[
-                "--disable-gpu",
-                "--disable-dev-shm-usage",
-                "--disable-setuid-sandbox",
-                "--no-sandbox",
-                "--disable-extensions",
-                "--disable-logging",
-                "--disable-web-security",
-                "--blink-settings=imagesEnabled=false",  # Disable images for speed
-            ]
         )
         return Browser(config=config)
 
@@ -214,92 +204,85 @@ async def return_browser_to_pool(browser):
 @app.post("/api/process-email", response_model=EmailResponse)
 async def process_email(request: EmailRequest, background_tasks: BackgroundTasks):
     """Endpoint to process emails using browser-use - optimized"""
-    if not BROWSER_USE_AVAILABLE:
-        raise HTTPException(
-            status_code=501, 
-            detail="Browser-use framework is not available. Please install required dependencies."
-        )
-    
+
     # Generate a unique task ID
     task_id = f"task_{int(time.time() * 1000)}"
+
+    # Get a browser from the pool
+    browser = await get_browser_from_pool()
     
-    try:
-        # Get a browser from the pool
-        browser = await get_browser_from_pool()
+    # Initialize controller with optimized settings
+    controller = Controller()
+    
+    # Create storage for the extracted email content
+    email_content = {"value": ""}
+    
+    # Register the function to process email content - optimized for speed
+    @controller.action("Process Email Content")
+    async def process_email_content(content: str) -> str:
+        """Process the email content and generate a response"""
+        # Save the content
+        email_content["value"] = content
         
-        # Initialize controller with optimized settings
-        controller = Controller()
+        # Generate a response with timeout
+        response = await generate_response_with_agno(content)
         
-        # Create storage for the extracted email content
-        email_content = {"value": ""}
+        # Return the exact response to be used
+        return response
+    
+    initial_actions = [
+        {'go_to_url': {'url': f'{request.slate_url}'}},
+    ]
+    # Create the agent with optimized settings
+    email_agent = BrowserAgent(
+        task=f"""
+            Click on the email to veiw it. Extract the full email message. Call process_email_content() with the content.
+            After receiving the response, find the reply area, paste the EXACT response, do not send.
+        """,  # Simplified task for speed
+        llm=ChatGoogleGenerativeAI(
+            model='gemini-2.5-pro-preview-03-25',
+            temperature=0.2,  # Lower temperature for faster responses
+            max_tokens=2048,  # Limit token count for speed
+        ),
+        browser=browser,
+        use_vision=True,  # Keep vision for accuracy
+        controller=controller,
+        initial_actions=initial_actions,
+        # max_steps=15,  # Limit steps for speed
+    )
+    
+    # Run the agent in background to return response quickly
+    active_tasks[task_id] = {
+        "status": "running",
+        "start_time": time.time(),
+        "url": request.slate_url,
+    }
+    
+    # Use background tasks to run the agent without blocking
+    background_tasks.add_task(
+        run_agent_with_cleanup, 
+        email_agent, 
+        browser, 
+        task_id, 
+        active_tasks,
+        return_browser_to_pool
+    )
+    
+    # Return immediately with task ID
+    return EmailResponse(
+        message="Browser has been launched to process the email. The AI will read the email and draft a response.",
+        task_id=task_id,
+    )
         
-        # Register the function to process email content - optimized for speed
-        @controller.action("Process Email Content")
-        async def process_email_content(content: str) -> str:
-            """Process the email content and generate a response"""
-            # Save the content
-            email_content["value"] = content
-            
-            # Generate a response with timeout
-            response = await generate_response_with_agno(content)
-            
-            # Return the exact response to be used
-            return response
-        
-        initial_actions = [
-            {'go_to_url': {'url': f'{request.slate_url}'}},
-        ]
-        # Create the agent with optimized settings
-        email_agent = BrowserAgent(
-            task=f"""
-                Click on the email to veiw it. Extract the full email message. Call process_email_content() with the content.
-                After receiving the response, find the reply area, paste the EXACT response, do not send.
-            """,  # Simplified task for speed
-            llm=ChatGoogleGenerativeAI(
-                model='gemini-2.5-pro-preview-03-25',
-                temperature=0.2,  # Lower temperature for faster responses
-                max_tokens=2048,  # Limit token count for speed
-            ),
-            browser=browser,
-            use_vision=True,  # Keep vision for accuracy
-            enable_memory=False,  # Disable memory for speed
-            controller=controller,
-            initial_actions=initial_actions,
-            # max_steps=15,  # Limit steps for speed
-        )
-        
-        # Run the agent in background to return response quickly
-        active_tasks[task_id] = {
-            "status": "running",
-            "start_time": time.time(),
-            "url": request.slate_url,
-        }
-        
-        # Use background tasks to run the agent without blocking
-        background_tasks.add_task(
-            run_agent_with_cleanup, 
-            email_agent, 
-            browser, 
-            task_id, 
-            active_tasks,
-            return_browser_to_pool
-        )
-        
-        # Return immediately with task ID
-        return EmailResponse(
-            message="Browser has been launched to process the email. The AI will read the email and draft a response.",
-            task_id=task_id,
-        )
-        
-    except Exception as e:
-        logger.error(f"Error processing email: {str(e)}")
-        # Attempt to return browser to pool even on error
-        if 'browser' in locals():
-            try:
-                await return_browser_to_pool(browser)
-            except:
-                pass
-        raise HTTPException(status_code=500, detail=f"Error processing email: {str(e)}")
+    # except Exception as e:
+    #     logger.error(f"Error processing email: {str(e)}")
+    #     # Attempt to return browser to pool even on error
+    #     if 'browser' in locals():
+    #         try:
+    #             await return_browser_to_pool(browser)
+    #         except:
+    #             pass
+    #     raise HTTPException(status_code=500, detail=f"Error processing email: {str(e)}")
     
 @app.post("/api/process-bulk-email", response_model=EmailResponse)
 async def process_bulk_email(request: EmailRequest, background_tasks: BackgroundTasks):
@@ -316,86 +299,84 @@ async def process_bulk_email(request: EmailRequest, background_tasks: Background
     # Generate a unique task ID
     task_id = f"task_{int(time.time() * 1000)}"
     
-    try:
         # Get a browser from the pool
-        browser = await get_browser_from_pool()
+    browser = await get_browser_from_pool()
+    
+    # Initialize controller with optimized settings
+    controller = Controller()
+    
+    # Create storage for the extracted email content
+    email_content = {"value": ""}
+    
+    # Register the function to process email content - optimized for speed
+    @controller.action("Process Email Content")
+    async def process_email_content(content: str) -> str:
+        """Process the email content and generate a response"""
+        # Save the content
+        email_content["value"] = content
         
-        # Initialize controller with optimized settings
-        controller = Controller()
+        # Generate a response with timeout
+        response = await generate_response_with_agno(content)
         
-        # Create storage for the extracted email content
-        email_content = {"value": ""}
-        
-        # Register the function to process email content - optimized for speed
-        @controller.action("Process Email Content")
-        async def process_email_content(content: str) -> str:
-            """Process the email content and generate a response"""
-            # Save the content
-            email_content["value"] = content
-            
-            # Generate a response with timeout
-            response = await generate_response_with_agno(content)
-            
-            # Return the exact response to be used
-            return response
-        
-        initial_actions = [
-            {'go_to_url': {'url': f'{request.slate_url}'}},
-        ]
-        # Create the agent with optimized settings
-        email_agent = BrowserAgent(
-            task=f"""
-                You are email processing agent. Your task is to process emails in the inbox.
-                Click on the email to veiw it. Extract the full email message. Call process_email_content() with the content.
-                After receiving the response, find the reply area, paste the EXACT response, do not send.
-                Go back on the inbox page and repeat the process for the next 4 emails.
+        # Return the exact response to be used
+        return response
+    
+    initial_actions = [
+        {'go_to_url': {'url': f'{request.slate_url}'}},
+    ]
+    # Create the agent with optimized settings
+    email_agent = BrowserAgent(
+        task=f"""
+            You are email processing agent. Your task is to process emails in the inbox.
+            Click on the email to veiw it. Extract the full email message. Call process_email_content() with the content.
+            After receiving the response, find the reply area, paste the EXACT response, do not send.
+            Go back on the inbox page and repeat the process for the next 4 emails.
 
-            """,  # Simplified task for speed
-            llm=ChatGoogleGenerativeAI(
-                model='gemini-2.5-pro-preview-03-25',
-                temperature=0.2,  # Lower temperature for faster responses
-                max_tokens=2048,  # Limit token count for speed
-            ),
-            browser=browser,
-            use_vision=True,  # Keep vision for accuracy
-            enable_memory=False,  # Disable memory for speed
-            controller=controller,
-            initial_actions=initial_actions,
-            # max_steps=15,  # Limit steps for speed
-        )
-        
-        # Run the agent in background to return response quickly
-        active_tasks[task_id] = {
-            "status": "running",
-            "start_time": time.time(),
-            "url": request.slate_url,
-        }
-        
-        # Use background tasks to run the agent without blocking
-        background_tasks.add_task(
-            run_agent_with_cleanup, 
-            email_agent, 
-            browser, 
-            task_id, 
-            active_tasks,
-            return_browser_to_pool
-        )
-        
-        # Return immediately with task ID
-        return EmailResponse(
-            message="Browser has been launched to process the email. The AI will read the email and draft a response.",
-            task_id=task_id,
-        )
-        
-    except Exception as e:
-        logger.error(f"Error processing email: {str(e)}")
-        # Attempt to return browser to pool even on error
-        if 'browser' in locals():
-            try:
-                await return_browser_to_pool(browser)
-            except:
-                pass
-        raise HTTPException(status_code=500, detail=f"Error processing email: {str(e)}")
+        """,  # Simplified task for speed
+        llm=ChatGoogleGenerativeAI(
+            model='gemini-2.5-pro-preview-03-25',
+            temperature=0.2,  # Lower temperature for faster responses
+            max_tokens=2048,  # Limit token count for speed
+        ),
+        browser=browser,
+        use_vision=True,  # Keep vision for accuracy
+        controller=controller,
+        initial_actions=initial_actions,
+        # max_steps=15,  # Limit steps for speed
+    )
+    
+    # Run the agent in background to return response quickly
+    active_tasks[task_id] = {
+        "status": "running",
+        "start_time": time.time(),
+        "url": request.slate_url,
+    }
+    
+    # Use background tasks to run the agent without blocking
+    background_tasks.add_task(
+        run_agent_with_cleanup, 
+        email_agent, 
+        browser, 
+        task_id, 
+        active_tasks,
+        return_browser_to_pool
+    )
+    
+    # Return immediately with task ID
+    return EmailResponse(
+        message="Browser has been launched to process the email. The AI will read the email and draft a response.",
+        task_id=task_id,
+    )
+    
+    # except Exception as e:
+    #     logger.error(f"Error processing email: {str(e)}")
+    #     # Attempt to return browser to pool even on error
+    #     if 'browser' in locals():
+    #         try:
+    #             await return_browser_to_pool(browser)
+    #         except:
+    #             pass
+    #     raise HTTPException(status_code=500, detail=f"Error processing email: {str(e)}")
 
 async def run_agent_with_cleanup(agent, browser, task_id, active_tasks, return_browser_func):
     """Run the agent and clean up resources when done"""
