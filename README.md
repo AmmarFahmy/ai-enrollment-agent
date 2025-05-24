@@ -271,7 +271,7 @@ DELETE /api/knowledge/{id}
 
 ## 🎬 Demo Video
 
-[Watch the demo video](https://youtube.com/your-demo-video) - 3-minute overview of features and capabilities
+[Watch the demo video](https://youtu.be/SicxcCxjctw) - 5-minute overview of features and capabilities
 
 ## 🔐 Security & Privacy
 
@@ -292,7 +292,6 @@ DELETE /api/knowledge/{id}
 
 - **Issues**: Please use GitHub Issues for bug reports
 - **Feature Requests**: Submit via GitHub Discussions
-- **Documentation**: Visit our [Wiki](https://github.com/yourusername/ai-enrollment-agent/wiki)
 
 ## 📜 License
 
