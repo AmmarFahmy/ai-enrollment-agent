@@ -11,13 +11,14 @@ from agno.agent import Agent
 from agno.models.google import Gemini
 from app.agno_manager.knowledge_base import knowledge_base
 from agno.tools.googlesearch import GoogleSearchTools
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # API Key for Gemini model
-API_KEY =  'AIzaSyBdtXQxu979vhRtsE5GgGQYCUJLjVBYLEk'
+API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Message model for conversation history
 class Message(BaseModel):
