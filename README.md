@@ -68,59 +68,150 @@ The AI Enrollment Counselor is a comprehensive AI-powered system designed to rev
 git clone https://github.com/YOUR_USERNAME/ai-enrollment-counselor.git
 cd ai-enrollment-counselor
 
-# 2. Set up environment
-echo "GEMINI_API_KEY=your_api_key_here" > backend/.env
+# 2. Install UV (recommended package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.cargo/env
 
-# 3. Quick start with Docker (if available)
-docker-compose up
+# 3. Backend setup
+cd backend
+uv venv
+source .venv/bin/activate  # WSL/Linux/Mac
+# .venv\Scripts\activate   # Windows (if not using WSL)
 
-# Or manual setup:
-# Backend
-cd backend && pip install -r requirements.txt && python main.py &
-# Frontend  
-cd frontend && npm install && npm start
+# 4. Install system dependencies (Ubuntu/WSL)
+sudo apt update
+sudo apt install portaudio19-dev python3-dev postgresql-client libpq-dev
+
+# 5. Install Python packages
+uv pip install -r requirements.txt
+
+# 6. Set up environment
+cat > .env << EOF
+GEMINI_API_KEY=your_gemini_api_key_here
+DATABASE_URL=your_neondb_or_postgres_connection_string
+EOF
+
+# 7. Start backend
+python main.py
 ```
 
-**Access at:** `http://localhost:3000`
+**Access at:** `http://localhost:8000/docs` for API documentation
 
 ### 🔑 Required API Keys
 - **Google Gemini API**: Get from [Google AI Studio](https://makersuite.google.com/app/apikey)
-- **PostgreSQL**: Included Docker setup or use provided connection string
+- **PostgreSQL Database**: Use NeonDB (recommended) or local PostgreSQL
+
+### 💡 Platform Recommendations
+- **Windows Users**: Use WSL2 Ubuntu for best compatibility
+- **Package Manager**: UV is recommended for faster, cleaner dependency management
+- **Database**: NeonDB offers free PostgreSQL with pgvector support
+
+### 🔧 Recent Improvements & Fixes
+This repository has been updated with several improvements for better setup experience:
+
+- **✅ Resolved Package Conflicts**: Updated `requirements.txt` to eliminate dependency conflicts between Google AI packages
+- **✅ Enhanced Compatibility**: Added support for WSL2 and better Windows compatibility
+- **✅ Modern Package Management**: Integrated UV for faster, more reliable package installation
+- **✅ Environment Configuration**: Updated to use dynamic environment variables instead of hardcoded values
+- **✅ System Dependencies**: Clear instructions for all required system libraries
+- **✅ Comprehensive Troubleshooting**: Added solutions for common setup issues encountered during development
+
+**Key Changes Made:**
+- Modified `requirements.txt` to resolve Google AI package version conflicts
+- Updated `knowledge_base.py` to read database URLs from environment variables
+- Added system dependency installation instructions
+- Integrated UV package manager for better dependency resolution
+- Enhanced error handling and troubleshooting documentation
 
 ## 📋 Full Installation Guide
 
 ### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- PostgreSQL 14+ (or use Docker)
-- Google Chrome/Chromium browser
+- **Operating System**: Ubuntu/WSL2 (recommended for Windows), macOS, or Linux
+- **Python**: 3.9+ (Python 3.12 recommended)
+- **Node.js**: 18+
+- **Package Manager**: UV (recommended) or pip
+- **Database**: NeonDB account (recommended) or PostgreSQL 14+
+- **Browser**: Google Chrome/Chromium
 
 ### Step-by-Step Setup
 
-#### 1. Clone Repository
+#### 1. Platform Setup (Windows Users)
+```bash
+# Install WSL2 Ubuntu (recommended for Windows)
+wsl --install Ubuntu-24.04
+# Restart and set up Ubuntu user account
+```
+
+#### 2. Install UV Package Manager
+```bash
+# Install UV (faster than pip)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.cargo/env
+
+# Verify installation
+uv --version
+```
+
+#### 3. Clone Repository
 ```bash
 git clone https://github.com/YOUR_USERNAME/ai-enrollment-counselor.git
 cd ai-enrollment-counselor
 ```
 
-#### 2. Backend Setup
+#### 4. System Dependencies
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+# Update system packages
+sudo apt update
+
+# Install required system libraries
+sudo apt install portaudio19-dev python3-dev postgresql-client libpq-dev
+
+# Optional: Install build essentials if needed
+sudo apt install build-essential
 ```
 
-#### 3. Environment Configuration
+#### 5. Backend Setup
+```bash
+cd backend
+
+# Create virtual environment with UV
+uv venv
+
+# Activate virtual environment
+source .venv/bin/activate  # Linux/macOS/WSL
+# For Windows Command Prompt: .venv\Scripts\activate
+
+# Install Python dependencies (resolved for compatibility)
+uv pip install -r requirements.txt
+```
+
+#### 6. Environment Configuration
 ```bash
 # Create .env file in backend directory
-cat > .env << EOF
+cat > .env << 'EOF'
+# Required: Get from https://makersuite.google.com/app/apikey
 GEMINI_API_KEY=your_gemini_api_key_here
-DATABASE_URL=postgresql+psycopg://ai:ai@localhost:5532/ai
+
+# Required: NeonDB connection string (recommended)
+# Format: postgresql://username:password@ep-xyz.region.aws.neon.tech/dbname?sslmode=require
+DATABASE_URL=your_neondb_connection_string
+
+# Optional: For enhanced reranking
+COHERE_API_KEY=your_cohere_api_key_here
 EOF
 ```
 
-#### 4. Database Setup
+#### 7. Database Setup Options
+
+**Option A: NeonDB (Recommended)**
+```bash
+# 1. Sign up at https://neon.tech
+# 2. Create a new project
+# 3. Copy the connection string to your .env file
+# 4. The application will auto-create tables
+```
+
+**Option B: Local PostgreSQL with Docker**
 ```bash
 # Start PostgreSQL with pgvector extension
 docker run -d \
@@ -130,27 +221,48 @@ docker run -d \
   -e POSTGRES_PASSWORD=ai \
   -p 5532:5432 \
   pgvector/pgvector:pg14
+
+# Update .env with local connection
+echo "DATABASE_URL=postgresql+psycopg://ai:ai@localhost:5532/ai" >> .env
 ```
 
-#### 5. Frontend Setup
+#### 8. Frontend Setup
 ```bash
-cd frontend
+# Navigate to frontend directory
+cd ../frontend
+
+# Install Node.js dependencies
 npm install
 ```
 
-#### 6. Start Services
+#### 9. Start Services
 ```bash
-# Terminal 1: Backend
-cd backend && python main.py
+# Terminal 1: Backend (from backend directory)
+cd backend
+source .venv/bin/activate  # Activate virtual environment
+python main.py
 
-# Terminal 2: Frontend
-cd frontend && npm start
+# Terminal 2: Frontend (from frontend directory)
+cd frontend
+npm start
 ```
 
-#### 7. Access Application
-- **Frontend**: `http://localhost:3000`
+#### 10. Access Application
+- **Backend API**: `http://localhost:8000`
 - **API Documentation**: `http://localhost:8000/docs`
+- **Frontend**: `http://localhost:3000`
 - **Health Check**: `http://localhost:8000/api/health`
+
+#### 11. Verify Setup
+```bash
+# Test backend API
+curl http://localhost:8000/api/health
+
+# Check knowledge base initialization
+curl http://localhost:8000/api/knowledge
+
+# Test chat endpoint (requires frontend or API docs)
+```
 
 ## 🎯 Hackathon Technical Highlights
 
@@ -421,37 +533,168 @@ npm run test:integration
 
 ## 🐛 Troubleshooting
 
-### Common Issues
+### Common Setup Issues
 
-#### 1. Database Connection
+#### 1. Package Installation Errors
+
+**Problem**: `psycopg2` build fails with "pg_config executable not found"
 ```bash
-# Check PostgreSQL status
-docker ps | grep postgres
+# Solution: Install PostgreSQL development libraries
+sudo apt update
+sudo apt install postgresql postgresql-contrib libpq-dev python3-dev
 
-# Reset database
-docker restart postgres-ai
+# Then retry installation
+uv pip install -r requirements.txt
 ```
 
-#### 2. Browser Automation
+**Problem**: `PyAudio` build fails with "portaudio.h: No such file or directory"
 ```bash
-# Install Chrome dependencies (Linux)
-sudo apt-get install -y chromium-browser
+# Solution: Install PortAudio development libraries
+sudo apt install portaudio19-dev python3-dev
+
+# Alternative: Remove PyAudio if not needed for your use case
+sed -i '/PyAudio==/d' requirements.txt
+```
+
+**Problem**: UV dependency conflicts with Google AI packages
+```bash
+# Solution: The requirements.txt has been updated to resolve conflicts
+# Use UV with the provided requirements.txt
+uv pip install -r requirements.txt
+
+# If still having issues, try:
+uv pip install --resolution=lowest-direct -r requirements.txt
+```
+
+#### 2. Database Connection Issues
+
+**Problem**: "connection to server at '127.0.0.1', port 5532 failed"
+```bash
+# Check if DATABASE_URL is properly set in .env
+cat backend/.env | grep DATABASE_URL
+
+# Verify .env file exists in backend directory
+ls -la backend/.env
+
+# Test database connection
+python -c "
+import os
+from dotenv import load_dotenv
+load_dotenv('backend/.env')
+print('DATABASE_URL:', os.getenv('DATABASE_URL'))
+"
+```
+
+**Problem**: "libpq library not found" with psycopg
+```bash
+# Install PostgreSQL client libraries
+sudo apt install libpq-dev postgresql-client
+
+# Reinstall psycopg
+uv pip install --force-reinstall psycopg==3.2.6
+```
+
+**Problem**: NeonDB connection string format
+```bash
+# Correct format for NeonDB:
+DATABASE_URL=postgresql://username:password@ep-xyz.region.aws.neon.tech/dbname?sslmode=require
+
+# NOT: postgresql+psycopg://... (this is for local PostgreSQL)
+```
+
+#### 3. Environment Variable Issues
+
+**Problem**: Application not reading .env file
+```bash
+# Ensure .env is in the correct location
+cd backend
+ls -la .env
+
+# Check file contents (without exposing secrets)
+cat .env | grep -E "^[A-Z]" | sed 's/=.*/=***/'
+
+# Verify Python can load the file
+python -c "
+from dotenv import load_dotenv
+load_dotenv()
+import os
+print('GEMINI_API_KEY set:', bool(os.getenv('GEMINI_API_KEY')))
+print('DATABASE_URL set:', bool(os.getenv('DATABASE_URL')))
+"
+```
+
+#### 4. Platform-Specific Issues
+
+**Windows Users:**
+```bash
+# Use WSL2 for best compatibility
+wsl --install Ubuntu-24.04
+
+# If using Windows directly, activate venv differently:
+.venv\Scripts\activate  # Instead of source .venv/bin/activate
+```
+
+**macOS Users:**
+```bash
+# Install Homebrew if not present
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install system dependencies
+brew install portaudio postgresql
+```
+
+#### 5. Browser Automation Issues
+```bash
+# Install Chrome dependencies (Linux/WSL)
+sudo apt install chromium-browser
 
 # Check Chrome path
-which google-chrome
+which google-chrome || which chromium-browser
+
+# Set Chrome path if needed (add to .env)
+echo "CHROME_PATH=/usr/bin/chromium-browser" >> backend/.env
 ```
 
-#### 3. API Key Issues
+#### 6. Memory and Performance Issues
+- **High memory usage**: The torch/CUDA packages are large; use CPU-only versions if GPU not available
+- **Slow startup**: Knowledge base initialization takes 10-30 seconds on first run
+- **API timeouts**: Increase timeout values for slow connections
+
+### Quick Diagnostic Commands
 ```bash
-# Verify Gemini API key
-curl -H "Authorization: Bearer $GEMINI_API_KEY" \
-  https://generativelanguage.googleapis.com/v1/models
+# Check all system dependencies
+sudo apt list --installed | grep -E "(libpq|portaudio|python3-dev)"
+
+# Verify Python environment
+python --version && python -c "import psycopg, psycopg2, agno, browser_use; print('All imports successful')"
+
+# Test database connection
+python -c "
+import os
+from dotenv import load_dotenv
+load_dotenv()
+from sqlalchemy import create_engine, text
+try:
+    engine = create_engine(os.getenv('DATABASE_URL'))
+    with engine.connect() as conn:
+        result = conn.execute(text('SELECT 1'))
+        print('Database connection: SUCCESS')
+except Exception as e:
+    print(f'Database connection failed: {e}')
+"
+
+# Check API keys
+curl -s -H "Authorization: Bearer $(grep GEMINI_API_KEY backend/.env | cut -d= -f2)" \
+  "https://generativelanguage.googleapis.com/v1/models" | jq '.models[0].name' 2>/dev/null || echo "API key test failed"
 ```
 
-### Performance Issues
-- **Slow responses**: Check database connection and API quotas
-- **Browser timeout**: Increase timeout values in browser config
-- **Memory usage**: Monitor background processes and connection pools
+### Getting Help
+If you encounter issues not covered here:
+1. Check the application logs for specific error messages
+2. Verify all system dependencies are installed
+3. Ensure your .env file is properly configured
+4. Try the diagnostic commands above
+5. Open an issue with your error logs and system information
 
 ## 🚀 Future Enhancements
 
