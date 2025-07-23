@@ -8,6 +8,14 @@ from agno.knowledge.document import DocumentKnowledgeBase
 from agno.embedder.google import GeminiEmbedder
 from . import text_documents
 from agno.reranker.cohere import CohereReranker
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+
+
 
 content_data = text_documents.content_data
 
@@ -27,7 +35,7 @@ API_KEY = 'AIzaSyBdtXQxu979vhRtsE5GgGQYCUJLjVBYLEk'
 documents = [Document(id=str(uuid4()), content=content_data)]
 
 # Database connection URL
-db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
+db_url = os.getenv("DATABASE_URL", "postgresql+psycopg://ai:ai@localhost:5532/ai")
 
 # Create a knowledge base with the loaded documents
 knowledge_base = DocumentKnowledgeBase(
