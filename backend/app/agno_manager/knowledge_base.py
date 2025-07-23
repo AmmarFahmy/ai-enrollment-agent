@@ -19,7 +19,7 @@ load_dotenv()
 
 content_data = text_documents.content_data
 
-API_KEY = 'AIzaSyBdtXQxu979vhRtsE5GgGQYCUJLjVBYLEk'
+API_KEY = os.getenv("GEMINI_API_KEY")
 
 
 
